@@ -1,0 +1,359 @@
+library(zoo)
+library(readxl)
+library(ggplot2)
+library(reshape2)
+library(stats)
+library(xtable)
+library(summarytools)
+library(markovchain)
+library(sqldf)
+
+pru<-read_xlsx("C:/Users/andre/OneDrive/Escritorio/Andrés/2023-1/Semillero/otros datos.xlsx")
+colnames(pru)<-c("Fecha","Bolivia","Centro Alto rendimiento","Cuidad Bolivar",
+                       "Colina","Fontibon", "Jazmin", "Kennedy", "Ferias", "MinAmbiente",
+                        "San Cristobal", "Suba", "Tunal")
+pru<-pru[,-c(2,5,9,10)]
+
+pru[pru=="----"]<-NA
+pru$`Centro Alto rendimiento` <- na.approx(pru$`Centro Alto rendimiento`, na.rm = FALSE)
+pru$Kennedy<-na.approx(pru$Kennedy, na.rm = F)
+pru$Tunal<-na.approx(pru$Tunal, na.rm = F)
+
+
+#-------------------------------------------------------------------------#
+## DESCRIPCIÓN DE LOS DATOS #####
+library(ggplot2)
+datos2 <- stack(pru[,-1])
+datos2$ind<-as.factor(datos2$ind)
+gr2<-ggplot(datos2, aes(x = ind, y = values, fill=ind)) + 
+  geom_boxplot()
+gr2 + guides(fill = guide_legend(title = "Puntos de monitoreo")) +
+  labs(title='Boxplot de los puntos de monitoreo en Bogotá.',x='Puntos de monitoreo.', y='PM2.5')+coord_flip()
+
+summary(pru[,-1]$`Centro Alto rendimiento`)
+summary(pru[,-1]$`Cuidad Bolivar`)
+summary(pru[,-1]$Fontibon)
+summary(pru[,-1]$Jazmin)
+summary(pru[,-1]$Kennedy)
+summary(pru[,-1]$`San Cristobal`)
+summary(pru[,-1]$Suba)
+summary(pru[,-1]$Tunal)
+
+#------------------------------------------------------------------------ #
+## CENTRO DE ALTO RENDIMIENTO#####
+
+altorendimiento<-pru[,2]
+altorendimiento$estado <- cut(altorendimiento$`Centro Alto rendimiento`, 
+                              breaks = c(-Inf, 12.0, 35.4, Inf), 
+                              labels = c("1", "2", "3"))
+
+
+# Crear la cadena de Markov Centro de Alto rendimiento
+cadena_altoren <- markovchainFit(data = altorendimiento$estado)
+
+## Matriz de transición Centro de Alto rendimiento
+
+cadena_altoren$estimate
+
+
+## Distribucion estacionaria
+
+Paltoren <- matrix(c(0.44444444, 0.5555556,0.00000,
+                     0.09259259, 0.8518519, 0.05555556,
+                     0.00000000, 0.7500000, 0.25000000),byrow = T, nrow = 3)
+
+xtable(Paltoren)
+
+markovaltrendi <- new("markovchain", states = c("1", "2","3"), transitionMatrix =
+                        Paltoren,name = "A markovchain Object" )
+
+disesta_altorendi <- steadyStates(markovaltrendi);disesta_altorendi
+
+
+#------------------------------------------------------------------------ #
+## CIUDAD BOLIVAR#####
+
+cuidadbolivar<-pru[,3]
+cuidadbolivar$estado <- cut(cuidadbolivar$`Cuidad Bolivar`, 
+                            breaks = c(-Inf, 12.0, 35.4, Inf), 
+                            labels = c("1", "2", "3"))
+
+
+# Crear la cadena de Markov Cuidad Bolivar
+cadena_cuibol <- markovchainFit(data = cuidadbolivar$estado)
+
+## Matriz de transición Cuidad Bolivar
+
+cadena_cuibol$estimate
+
+## Distribucion estacionaria
+
+Pcuibol <- matrix(c(0.50000000, 0.5000000, 0.00000000,
+                    0.05084746, 0.9152542, 0.03389831,
+                    0.00000000, 1.0000000, 0.00000000),byrow = T, nrow = 3)
+
+xtable(Pcuibol)
+markovcuibol <- new("markovchain", states = c("1", "2","3"), transitionMatrix =
+                      Pcuibol,name = "A markovchain Object" )
+
+disesta_cuibol <- steadyStates(markovcuibol); disesta_cuibol
+
+
+
+
+#------------------------------------------------------------------------ #
+## Fontibon #####
+
+fontibon<-pru[,4]
+fontibon$estado <- cut(fontibon$Fontibon, 
+                       breaks = c(-Inf, 12.0, 35.4, Inf), 
+                       labels = c("1", "2", "3"))
+
+
+# Crear la cadena de Markov Fontibon
+cadena_fontibon <- markovchainFit(data = fontibon$estado)
+
+## Matriz de transición Fontibon
+
+cadena_fontibon$estimate
+
+## Distribucion estacionaria
+
+Pfonti <- matrix(c(0.1428571, 0.8571429, 0.00000000,
+                   0.1052632, 0.8421053, 0.05263158,
+                   0.00000000, 1.000000, 0.00000000),byrow = T, nrow = 3)
+
+xtable(Pfonti)
+
+markovfonti <- new("markovchain", states = c("1", "2","3"), transitionMatrix =
+                     Pfonti,name = "A markovchain Object" )
+
+disesta_fonti <- steadyStates(markovfonti);disesta_fonti
+
+#------------------------------------------------------------------------ #
+## Jazmin  ####
+
+jazmin<-pru[,5]
+jazmin$estado <- cut(jazmin$Jazmin, 
+                     breaks = c(-Inf, 12.0, 35.4, Inf), 
+                     labels = c("1", "2", "3"))
+
+
+# Crear la cadena de Markov Jazmin
+cadena_jazmin <- markovchainFit(data = jazmin$estado)
+
+## Matriz de transición Jazmin
+
+cadena_jazmin$estimate
+
+## Distribucion estacionaria
+
+Pjazmin <- matrix(c(0.2500000, 0.7500000, 0.00000000,
+                    0.1071429, 0.8392857, 0.05357143,
+                    0.0000000, 1.0000000, 0.00000000),byrow = T, nrow = 3)
+
+xtable(Pjazmin)
+
+markovjazmin <- new("markovchain", states = c("1", "2","3"), transitionMatrix =
+                      Pjazmin,name = "A markovchain Object" )
+
+disesta_jazmin <- steadyStates(markovjazmin);disesta_jazmin
+
+
+#------------------------------------------------------------------------ #
+## Kennedy #####
+
+kennedy<-pru[,6]
+kennedy$estado <- cut(kennedy$Kennedy, 
+                      breaks = c(-Inf, 12.0, 35.4, Inf), 
+                      labels = c("1", "2", "3"))
+
+
+# Crear la cadena de Markov Kennedy
+cadena_kennedy <- markovchainFit(data = kennedy$estado)
+
+## Matriz de transición kennedy
+
+cadena_kennedy$estimate
+
+## Distribucion estacionaria
+
+Pkennedy <- matrix(c(0.50, 0.50, 0.00,
+                     0.02, 0.8800000, 0.1000000,
+                     0.00, 0.3333333, 0.6666667),byrow = T, nrow = 3)
+
+xtable(Pkennedy)
+
+markovkennedy <- new("markovchain", states = c("1", "2","3"), transitionMatrix =
+                       Pkennedy,name = "A markovchain Object" )
+
+disesta_kennedy <- steadyStates(markovkennedy);disesta_kennedy
+
+
+
+
+
+#------------------------------------------------------------------------ #
+## San Cristobal #####
+
+scristobal<-pru[,7]
+scristobal$estado <- cut(scristobal$`San Cristobal`, 
+                         breaks = c(-Inf, 12.0, 35.4, Inf), 
+                         labels = c("1", "2", "3"))
+
+
+# Crear la cadena de Markov San Cristobal
+cadena_scristobal <- markovchainFit(data = scristobal$estado)
+
+## Matriz de transición San Cristobal
+
+cadena_scristobal$estimate
+
+## Distribucion estacionaria
+
+Pscristobal <- matrix(c(0.5000000, 0.5000000, 0.00000000,
+                        0.1111111, 0.8703704, 0.01851852,
+                        0.0000000, 1.0000000, 0.00000000),byrow = T, nrow = 3)
+
+xtable(Pscristobal)
+
+markovscristobal <- new("markovchain", states = c("1", "2","3"), transitionMatrix =
+                          Pscristobal,name = "A markovchain Object" )
+
+disesta_scristobal <- steadyStates(markovscristobal);disesta_scristobal
+
+
+
+#------------------------------------------------------------------------ #
+## Suba  #####
+
+suba<-pru[,8]
+suba$estado <- cut(suba$Suba, 
+                   breaks = c(-Inf, 12.0, 35.4, Inf), 
+                   labels = c("1", "2", "3"))
+
+
+# Crear la cadena de Markov Suba
+cadena_suba <- markovchainFit(data = suba$estado)
+
+## Matriz de transición SUBA
+
+cadena_suba$estimate
+
+## Distribucion estacionaria
+
+Psuba <- matrix(c(0.3750000, 0.6250000, 0.00000000,
+                  0.0862069, 0.8965517, 0.01724138,
+                  0.0000000, 1.0000000, 0.00000000),byrow = T, nrow = 3)
+xtable(Psuba)
+
+markovsuba <- new("markovchain", states = c("1", "2","3"), transitionMatrix =
+                    Psuba,name = "A markovchain Object" )
+
+disesta_suba <- steadyStates(markovsuba);disesta_suba
+
+
+
+#------------------------------------------------------------------------ #
+## Tunal #####
+
+tunal<-pru[,9]
+tunal$estado <- cut(tunal$Tunal, 
+                    breaks = c(-Inf, 12.0, 35.4, Inf), 
+                    labels = c("1", "2", "3"))
+
+
+# Crear la cadena de Markov Tunal
+cadena_tunal <- markovchainFit(data = tunal$estado)
+
+## Matriz de transición Tunal
+
+cadena_tunal$estimate
+
+## Distribucion estacionaria
+
+Ptunal <- matrix(c(0.00000000, 1.000000, 0.0000000,
+                   0.03508772, 0.877193, 0.0877193,
+                   0.00000000, 0.625000, 0.3750000),byrow = T, nrow = 3)
+
+xtable(round(Ptunal,2))
+
+markovtunal <- new("markovchain", states = c("1", "2","3"), transitionMatrix =
+                     Ptunal,name = "A markovchain Object" )
+
+disesta_tunal <- steadyStates(markovtunal); disesta_tunal
+
+
+
+
+## Gráficos de calor #####
+install.packages('sf') # Si no has instalado el paquete aún
+
+mi_shape2<-cbind(mi_shape,c())
+library(sf)
+mi_shape <- sf::st_read('C:/Users/andre/OneDrive/Escritorio/Andrés/2023-1/Semillero/Locashp/Loca.shp')
+mi_shape2<-mi_shape[-9,]
+p11<-c(NA,0,NA,NA,0.441,NA,0.25,NA,NA,NA,NA,0.5,NA,0.5,NA,0.5,0.14,NA,0.38)
+p12<-c(NA,1,NA,NA,0.56,NA,0.75,NA,NA,NA,NA,0.5,NA,0.5,NA,0.5,0.86,NA,0.62)
+p13<-c(NA,0,NA,NA,0,NA,0,NA,NA,NA,NA,0,NA,0,NA,0,0,NA,0)
+p21<-c(NA,0.035,NA,NA,0.09,NA,0.11,NA,NA,NA,NA,0.11,NA,0.05,NA,0.02,0.11,NA,0.086)
+p22<-c(NA,0.877,NA,NA,0.85,NA,0.84,NA,NA,NA,NA,0.87,NA,0.92,NA,0.88,0.84,NA,0.897)
+p23<-c(NA,0.088,NA,NA,0.06,NA,0.05,NA,NA,NA,NA,0.02,NA,0.03,NA,0.1,0.05,NA,0.017)
+p31<-c(NA,0,NA,NA,0,NA,0,NA,NA,NA,NA,0,NA,0,NA,0,0,NA,0)
+p32<-c(NA,0.62,NA,NA,0.75,NA,1,NA,NA,NA,NA,1,NA,1,NA,0.33,1,NA,1)
+p33<-c(NA,0.38,NA,NA,0.25,NA,0,NA,NA,NA,NA,0,NA,0,NA,0.67,0,NA,0)
+pi11<-c(NA,0.029,NA,NA,0.13,NA,0.119,NA,NA,NA,NA,0.179,NA,0.089,NA,0.029,0.104,NA,0.119)
+pi22<-c(NA,0.85,NA,NA,0.81,NA,0.835,NA,NA,NA,NA,0.805,NA,0.88,NA,0.746,0.85,NA,0.865)
+pi33<-c(NA,0.119,NA,NA,0.06,NA,0.044,NA,NA,NA,NA,0.014,NA,0.029,NA,0.223,0.044,NA,0.014)
+m1<-c(NA,33.5,NA,NA,7.44,NA,8.37,NA,NA,NA,NA,5.58,NA,11.167,NA,33.5,9.57,NA,8.37)
+m2<-c(NA,1.17,NA,NA,1.24,NA,1.19,NA,NA,NA,NA,1.24,NA,1.13,NA,1.34,1.17,NA,1.15)
+m3<-c(NA,8.37,NA,NA,16.75,NA,22.33,NA,NA,NA,NA,67,NA,33.5,NA,4.46,22.33,NA,67)
+s1<-c(NA,1,NA,NA,1.8,NA,1.33,NA,NA,NA,NA,2,NA,2,NA,2,1.17,NA,1.6)
+s2<-c(NA,8.14,NA,NA,6.75,NA,6.22,NA,NA,NA,NA,7.71,NA,11.8,NA,8.33,6.33,NA,9.67)
+s3<-c(NA,1.6,NA,NA,1.33,NA,1,NA,NA,NA,NA,1,NA,1,NA,3,1,NA,1)
+
+mi_shape2<-cbind(mi_shape2,p11,p12,p13,p21,p22,p23,p31,p32,p33,pi11,pi22,pi33,
+                 m1,m2,m3,s1,s2,s3)
+
+# Matriz de transicion #####
+library(patchwork)
+(ggplot(data = mi_shape2,aes(fill =p11)) +geom_sf()+
+       geom_sf(color = "black", size = 0.1))+
+(ggplot(data = mi_shape2,aes(fill =p12)) +geom_sf()+
+   geom_sf(color = "black", size = 0.1))+
+(ggplot(data = mi_shape2,aes(fill =p13)) +geom_sf()+
+   geom_sf(color = "black", size = 0.1))+
+(ggplot(data = mi_shape2,aes(fill =p21)) +geom_sf()+
+   geom_sf(color = "black", size = 0.1))+
+(ggplot(data = mi_shape2,aes(fill =p22)) +geom_sf()+
+   geom_sf(color = "black", size = 0.1))+
+(ggplot(data = mi_shape2,aes(fill =p23)) +geom_sf()+
+   geom_sf(color = "black", size = 0.1))+
+(ggplot(data = mi_shape2,aes(fill =p31)) +geom_sf()+
+   geom_sf(color = "black", size = 0.1))+
+(ggplot(data = mi_shape2,aes(fill =p32)) +geom_sf()+
+   geom_sf(color = "black", size = 0.1))+
+(ggplot(data = mi_shape2,aes(fill =p33)) +geom_sf()+
+   geom_sf(color = "black", size = 0.1))
+
+# Distribucion estacionaria #####
+(ggplot(data = mi_shape2,aes(fill =pi11)) +geom_sf()+
+   geom_sf(color = "black", size = 0.1))+
+  (ggplot(data = mi_shape2,aes(fill =pi22)) +geom_sf()+
+     geom_sf(color = "black", size = 0.1))+
+  (ggplot(data = mi_shape2,aes(fill =pi33)) +geom_sf()+
+     geom_sf(color = "black", size = 0.1))
+# tiempo medio de retorno ######
+(ggplot(data = mi_shape2,aes(fill =m1)) +geom_sf()+
+   geom_sf(color = "black", size = 0.1))+
+  (ggplot(data = mi_shape2,aes(fill =m2)) +geom_sf()+
+     geom_sf(color = "black", size = 0.1))+
+  (ggplot(data = mi_shape2,aes(fill =m3)) +geom_sf()+
+     geom_sf(color = "black", size = 0.1))
+# tiempo medio de persistencia ######
+(ggplot(data = mi_shape2,aes(fill =s1)) +geom_sf()+
+   geom_sf(color = "black", size = 0.1))+
+  (ggplot(data = mi_shape2,aes(fill =s2)) +geom_sf()+
+     geom_sf(color = "black", size = 0.1))+
+  (ggplot(data = mi_shape2,aes(fill =s3)) +geom_sf()+
+     geom_sf(color = "black", size = 0.1))
