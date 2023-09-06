@@ -7,7 +7,7 @@ library(xtable)
 library(summarytools)
 library(markovchain)
 library(sqldf)
-
+edit
 pru<-read_xlsx("C:/Users/andre/OneDrive/Escritorio/Andrés/2023-1/Semillero/otros datos.xlsx")
 colnames(pru)<-c("Fecha","Bolivia","Centro Alto rendimiento","Cuidad Bolivar",
                        "Colina","Fontibon", "Jazmin", "Kennedy", "Ferias", "MinAmbiente",
